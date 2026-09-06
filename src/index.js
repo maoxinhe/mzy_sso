@@ -24,6 +24,8 @@ import {
 import { handleAdmin } from './admin.js';
 import { docsPage, sdkScript } from './docs.js';
 
+const VERSION = 'v1.1.0';
+
 /* =========================================================
  *  工具函数
  * ========================================================= */
@@ -186,7 +188,7 @@ async function route(request, env, store, url, pathname) {
       user,
       qqEnabled: !!(env.QQ_APPID && env.QQ_APPKEY),
       githubEnabled: !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
-      stats
+      version: VERSION
     }));
   }
 
@@ -224,7 +226,17 @@ async function route(request, env, store, url, pathname) {
   if (pathname === '/profile') {
     if (!user) return redirect(`/login?redirect_uri=${encodeURIComponent(pathname)}`);
     const msg = url.searchParams.get('msg');
-    return html(profilePage({ siteName: env.SITE_NAME, user, message: msg }));
+    const apps = await store.listUserApps(user.uid);
+    return html(profilePage({ siteName: env.SITE_NAME, user, message: msg, apps }));
+  }
+
+  // 用户自主撤销对某个应用的授权
+  if (pathname === '/profile/revoke-consent' && method === 'POST') {
+    if (!user) return redirect('/login');
+    const form = await request.formData().catch(() => null);
+    const clientId = String(form?.get('client_id') || '');
+    if (clientId) await store.revokeConsent(user.uid, clientId);
+    return redirect('/profile?msg=' + encodeURIComponent('已撤销该应用的授权'));
   }
 
   if (pathname === '/profile/update' && method === 'POST') {
@@ -291,7 +303,8 @@ async function renderLogin(request, env, store, url) {
     app,
     allowRegister: String(env.ALLOW_REGISTER) === 'true',
     qqEnabled: !!(env.QQ_APPID && env.QQ_APPKEY),
-    githubEnabled: !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET)
+    githubEnabled: !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
+    version: VERSION
   }));
 }
 
@@ -365,6 +378,7 @@ async function doRegister(request, env, store, url) {
     password_hash: await hashPassword(password),
     nickname: username
   });
+  await store.addLog({ type: 'user.register', text: `新用户注册：${username}`, actor: user.uid });
 
   return issueSession(request, env, store, user, target);
 }
@@ -384,6 +398,7 @@ async function issueSession(request, env, store, user, target) {
 
   await store.updateUser(user.uid, { last_login_at: Date.now() });
   await store.bumpStat('logins', 1);
+  await store.addLog({ type: 'auth.login', text: `${user.nickname || user.username} 登录成功`, actor: user.uid });
 
   const res = redirect(safeInternal(target), 303);
   return setSessionCookie(res, sid, ttl);
@@ -680,12 +695,21 @@ async function handleSetup(request, env, store, url) {
   if (password.length < 6) return back('密码至少 6 位');
   if (password !== password2) return back('两次输入的密码不一致');
 
+  // 记录实例首次启动时间，用于系统状态页展示运行时长
+  const stats = await store.getStats();
+  if (!stats.first_boot_at) await store.put('stats', { ...stats, first_boot_at: Date.now() });
+
   const user = await store.createUser({
     uid: randomId('u', 12),
     username, email,
     password_hash: await hashPassword(password),
     nickname: username,
     is_admin: true
+  });
+  await store.addLog({
+    type: 'system.init',
+    text: `实例初始化完成，管理员账号 ${username} 已创建`,
+    actor: user.uid
   });
 
   return issueSession(request, env, store, user, '/admin');

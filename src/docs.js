@@ -3,48 +3,36 @@
  * 含：接入流程、时序、各语言示例、完整 API 参考、错误码、JS SDK 用法
  */
 
-import { page, esc } from './ui.js';
+import { page, esc, ICONS } from './ui.js';
 
+// 文档页复用 ui.js 设计系统中的 .doc / .doc-toc / .notice / .step 样式
 const EXTRA = `
-.doc{max-width:880px}
-.doc h2{font-size:20px;margin:30px 0 10px;padding-top:18px;border-top:1px solid var(--line);letter-spacing:-.3px}
-.doc h2:first-of-type{border-top:none;padding-top:0;margin-top:8px}
-.doc h3{font-size:15px;margin:20px 0 8px}
-.doc p,.doc li{font-size:14px;color:var(--text)}
-.doc p{margin-bottom:10px}
-.doc ul{margin:0 0 12px 20px}
-.doc li{margin-bottom:5px}
-.doc code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1.5px 6px;font-size:12.5px;
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--brand);word-break:break-all}
-.doc pre{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow-x:auto;
-  margin:0 0 14px;font-size:12.5px;line-height:1.65}
-.doc pre code{background:none;border:none;padding:0;color:var(--text);font-size:12.5px}
-.doc table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px}
-.doc th,.doc td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
-.doc th{background:var(--bg);font-size:12px}
-.doc .note{padding:11px 14px;border-radius:10px;background:var(--brand-soft);border:1px solid var(--line);
-  font-size:13px;margin-bottom:14px}
-.doc .step{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
-.doc .step i{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;
-  display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;font-weight:700;margin-top:2px}
-.toc{position:sticky;top:0;background:var(--panel);padding:10px 0;margin-bottom:8px;border-bottom:1px solid var(--line);
-  display:flex;gap:6px;overflow-x:auto;z-index:5}
-.toc a{padding:5px 11px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--muted);
-  border:1px solid var(--line);white-space:nowrap;background:var(--bg)}
-.toc a:hover{text-decoration:none;color:var(--brand);border-color:var(--brand)}
+.doc-nav{position:sticky;top:0;z-index:20;backdrop-filter:saturate(180%) blur(14px);
+  background:color-mix(in srgb,var(--bg) 85%,transparent);border-bottom:1px solid var(--border)}
+.doc-nav-in{max-width:860px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.doc-logo{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.doc-logo svg{color:var(--brand);width:21px;height:21px}
 `;
 
 export function docsPage({ siteName, issuer }) {
   const I = issuer;
 
-  const body = `<div class="wrap" style="align-items:flex-start;padding-top:32px">
-  <div class="card doc">
-    <div class="brand">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-      <b>${esc(siteName)} 接入文档</b>
+  const nav = `<div class="doc-nav"><div class="doc-nav-in">
+    <a class="doc-logo" href="/">${ICONS.shield}<span>${esc(siteName)}</span></a>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="theme-btn" onclick="toggleTheme()" title="切换主题">${ICONS.moon}</button>
+      <a class="btn btn-secondary btn-sm" href="/">返回首页</a>
+      <a class="btn btn-primary btn-sm" href="/admin">${ICONS.apps} 控制台</a>
+    </div>
+  </div></div>`;
+
+  const body = nav + `<div class="doc">
+    <div class="doc-h">
+      <h1>接入文档</h1>
+      <p>把 ${esc(siteName)} 接入你的站点，5 分钟完成</p>
     </div>
 
-    <div class="toc">
+    <div class="doc-toc">
       <a href="#flow">接入流程</a>
       <a href="#quick">快速开始</a>
       <a href="#sdk">JS SDK</a>
@@ -54,16 +42,18 @@ export function docsPage({ siteName, issuer }) {
       <a href="#faq">常见问题</a>
     </div>
 
-    <p style="color:var(--muted)">
+    <p>
       本服务是完整的 <b>OAuth 2.0 授权服务器</b> + <b>OpenID Connect</b> 身份提供者。
       任何支持 OAuth2 的标准库（Laravel Socialite、Passport、Authlib、Spring Security、oidc-client-ts 等）
       都可以零改造接入。
     </p>
 
-    <div class="note">
+    <div class="notice">
+      ${ICONS.globe}<div>
       <b>基础地址（Issuer）：</b><code>${esc(I)}</code><br>
       标准发现文档：<a href="/.well-known/openid-configuration" target="_blank"><code>${esc(I)}/.well-known/openid-configuration</code></a>
       —— 多数框架填这一个地址即可自动完成全部配置。
+      </div>
     </div>
 
     <h2 id="flow">一、接入流程</h2>
@@ -139,7 +129,7 @@ Authorization: Bearer mzy_at_xxxxxxxx</code></pre>
   "updated_at": 1750000000000
 }</code></pre>
 
-    <div class="note"><b>关联账号请用 <code>sub</code></b>，不要用邮箱或昵称——用户可以修改它们，<code>sub</code> 永久不变。</div>
+    <div class="notice"><b>关联账号请用 <code>sub</code></b>，不要用邮箱或昵称——用户可以修改它们，<code>sub</code> 永久不变。</div>
 
     <h2 id="sdk">三、前端 JS SDK（零依赖）</h2>
     <p>在页面里引入一行脚本，3 个方法即可完成接入：</p>

@@ -215,6 +215,32 @@ class Store {
     return apps;
   }
 
+  /** 某用户已授权过的应用（含授权范围与时间） */
+  async listUserApps(uid) {
+    const apps = await this.listApps();
+    const out = [];
+    for (const a of apps) {
+      const c = await this.get(`consent:${uid}:${a.client_id}`);
+      if (c) out.push({ ...a, granted_scopes: c.scopes || [], granted_at: c.granted_at });
+    }
+    out.sort((x, y) => (y.granted_at || 0) - (x.granted_at || 0));
+    return out;
+  }
+
+  /** 撤销某用户对某应用的授权（下次访问需重新确认，同时作废其令牌） */
+  async revokeConsent(uid, clientId) {
+    await this.del(`consent:${uid}:${clientId}`);
+    const tokens = await this.listTokens(1000);
+    let n = 0;
+    for (const t of tokens) {
+      if (t.client_id === clientId && t.uid === uid) {
+        await this.deleteToken(t.access_token);
+        n++;
+      }
+    }
+    return n;
+  }
+
   /*********************************************************
    *  授权码 / 令牌
    *********************************************************/
@@ -254,6 +280,54 @@ class Store {
     const rec = await this.getToken(accessToken);
     if (rec?.refresh_token) await this.del(`refresh:${rec.refresh_token}`);
     await this.del(`token:${accessToken}`);
+    return rec;
+  }
+
+  /** 列出当前全部有效访问令牌（KV 会自动过滤已过期的） */
+  async listTokens(limit = 500) {
+    const res = await this.kv.list({ prefix: 'token:', limit });
+    const now = Math.floor(Date.now() / 1000);
+    const items = [];
+    for (const k of res.keys) {
+      const v = await this.get(k.name);
+      if (v && (!v.expires_at || v.expires_at > now)) items.push(v);
+    }
+    items.sort((a, b) => (b.issued_at || 0) - (a.issued_at || 0));
+    return items;
+  }
+
+  /** 撤销某个应用下的全部令牌，返回撤销数量 */
+  async revokeTokensByClient(clientId) {
+    const tokens = await this.listTokens(1000);
+    let n = 0;
+    for (const t of tokens) {
+      if (t.client_id === clientId) {
+        await this.deleteToken(t.access_token);
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /*********************************************************
+   *  审计日志
+   *********************************************************/
+
+  async addLog(entry) {
+    const now = Date.now();
+    const key = `log:${now}_${b64(6)}`;
+    await this.put(key, { ...entry, ts: now }, 60 * 60 * 24 * 90); // 保留 90 天
+  }
+
+  async listLogs(limit = 100) {
+    const res = await this.kv.list({ prefix: 'log:', limit });
+    const items = [];
+    for (const k of res.keys) {
+      const v = await this.get(k.name);
+      if (v) items.push(v);
+    }
+    items.sort((a, b) => b.ts - a.ts); // 最新在前
+    return items.slice(0, limit);
   }
 
   /*********************************************************
