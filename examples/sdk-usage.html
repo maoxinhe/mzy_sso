@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MZY SSO · 纯前端接入示例（JS SDK）</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;
+       background:#f6f7fb;color:#111827;line-height:1.6;padding:40px 20px}
+  .box{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;
+       border-radius:16px;padding:28px;box-shadow:0 10px 40px -10px rgba(17,24,39,.12)}
+  h1{font-size:20px;margin-bottom:6px}
+  p.sub{color:#6b7280;font-size:14px;margin-bottom:22px}
+  button{width:100%;padding:11px;font-size:14px;font-weight:600;border:none;border-radius:10px;
+         cursor:pointer;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;margin-bottom:10px}
+  button:hover{filter:brightness(1.08)}
+  button.ghost{background:transparent;border:1.5px solid #e5e7eb;color:#111827}
+  button:hover.ghost{border-color:#4f46e5;color:#4f46e5;filter:none}
+  .card{display:none;margin-top:20px;padding:16px;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb}
+  .card b{display:block;margin-bottom:4px}
+  code{background:#eef2ff;color:#4f46e5;padding:2px 6px;border-radius:4px;font-size:12.5px;word-break:break-all}
+  img{border-radius:50%;vertical-align:middle;margin-right:10px}
+  pre{background:#0b0d13;color:#e8eaf0;padding:14px;border-radius:10px;overflow-x:auto;
+      font-size:12px;margin-top:18px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>MZY SSO 纯前端接入</h1>
+  <p class="sub">使用 <code>/sdk.js</code>，无需后端即可完成登录</p>
+
+  <div id="guest">
+    <button onclick="doLogin()">使用 MZY SSO 登录</button>
+  </div>
+
+  <div id="member" style="display:none">
+    <div class="card" style="display:block">
+      <h3 id="uname"></h3>
+      <p><b>sub（账号关联用这个）</b>：<br><code id="usub"></code></p>
+      <p><b>邮箱</b>：<span id="umail"></span></p>
+      <p><b>登录方式</b>：<span id="uprov"></span></p>
+    </div>
+    <button class="ghost" onclick="doLogout()">退出登录</button>
+  </div>
+
+  <pre>// 核心代码只有 4 行
+const sso = MZYSSO.init({
+  issuer:   'https://sso.camzy.uno',
+  clientId: 'mzy_xxxxxxxxxxxx'
+});
+
+sso.login();                            // 跳转登录
+const s = await sso.handleRedirect();   // 回调页处理
+const { user } = await sso.getUser();   // 获取用户（自动续期）
+sso.logout();                           // 退出</pre>
+</div>
+
+<!-- 一行引入 SDK -->
+<script src="https://sso.camzy.uno/sdk.js"></script>
+<script>
+  const sso = MZYSSO.init({
+    issuer: 'https://sso.camzy.uno',
+    clientId: 'mzy_xxxxxxxxxxxx',   // ← 换成你的 client_id
+    redirectUri: location.origin + location.pathname
+  });
+
+  function show(user) {
+    document.getElementById('guest').style.display = 'none';
+    document.getElementById('member').style.display = 'block';
+    document.getElementById('uname').innerHTML =
+      `<img src="${user.picture || ''}" width="34" height="34" alt="">${user.name || ''}`;
+    document.getElementById('usub').textContent  = user.sub;
+    document.getElementById('umail').textContent = user.email || '未公开';
+    document.getElementById('uprov').textContent = (user.providers || []).join('、') || '密码';
+  }
+
+  function doLogin() { sso.login(); }
+
+  function doLogout() { sso.logout(location.origin + location.pathname); }
+
+  // 页面加载时：先尝试处理回调（如果 URL 上带 code），否则读取本地会话
+  (async () => {
+    try {
+      const session = await sso.handleRedirect();
+      if (session) return show(session.user);
+    } catch (e) {
+      console.warn('回调处理失败：', e.message);
+    }
+    const cur = await sso.getUser();
+    if (cur) show(cur.user);
+  })();
+</script>
+
+</body>
+</html>

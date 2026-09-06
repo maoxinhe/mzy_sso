@@ -1,0 +1,51 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "mzy-sso"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# 正式访问地址：https://sso.camzy.uno
+# workers.dev 地址 https://mzy-sso.catkinr-93f.workers.dev 同样可用（国内访问稳定性较差）
+# 换成你自己的域名：把下面 pattern 改掉，并确保该域名托管在同一个 Cloudflare 账户下
+routes = [
+  { pattern = "sso.camzy.uno", custom_domain = true }
+]
+
+# 观察性：开启后可查看请求日志
+[observability]
+enabled = true
+
+# ---- KV 存储：用户 / 会话 / 授权码 / 令牌 / 应用配置 ----
+[[kv_namespaces]]
+binding = "SSO_KV"
+id = "da30ce432cd447a8a53fc4529d7a4ae9"
+
+# ---- 非敏感配置 ----
+[vars]
+# 服务对外名称，会显示在登录页和 OIDC 发现文档中
+SITE_NAME = "MZY SSO"
+# 服务的对外根地址（不要带结尾斜杠），必须与浏览器实际访问地址一致
+ISSUER = "https://sso.camzy.uno"
+# 第三方登录：QQ（小白菜聚合登录）
+QQ_API = "https://u.0mz.cn"
+QQ_APPID = "1816"
+# 第三方登录：GitHub OAuth App
+GITHUB_CLIENT_ID = "Ov23lix8isGOSSoCOv1w"
+# 各类令牌有效期（秒）
+ACCESS_TOKEN_TTL = "7200"
+REFRESH_TOKEN_TTL = "2592000"
+AUTH_CODE_TTL = "300"
+SESSION_TTL = "604800"
+# 是否开放公开注册
+ALLOW_REGISTER = "true"
+# 是否开放「应用自助注册」（false 时只有管理员能创建应用）
+ALLOW_APP_REGISTER = "false"
+
+# ---- 敏感配置 ----
+# 以下 3 个密钥不写在配置文件里（避免随 Git 泄露），请用下面的命令写入：
+#
+#   npx wrangler secret put JWT_SECRET
+#   npx wrangler secret put QQ_APPKEY
+#   npx wrangler secret put GITHUB_CLIENT_SECRET
+#
+# 本地开发则写入 .dev.vars（已在 .gitignore 中，参考 .dev.vars.example）
+ADMIN_EMAIL = "admin@mzy.local"

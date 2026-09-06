@@ -1,0 +1,17 @@
+{
+  "name": "mzy-sso",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MZY SSO - 部署在 Cloudflare Worker 上的轻量级单点登录服务，标准 OAuth 2.0 / OIDC",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.0"
+  },
+  "license": "MIT"
+}

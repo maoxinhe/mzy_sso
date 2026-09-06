@@ -1,0 +1,13 @@
+# 本地开发用密钥文件模板
+# 复制为 .dev.vars 后填写（.dev.vars 已被 .gitignore 忽略，不会提交）
+#
+# 生产环境请用：npx wrangler secret put <NAME>
+
+# id_token 签名密钥，务必换成随机长字符串
+JWT_SECRET=请替换为随机字符串
+
+# 小白菜聚合登录（https://u.0mz.cn）的 APPKEY
+QQ_APPKEY=
+
+# GitHub OAuth App 的 Client Secret
+GITHUB_CLIENT_SECRET=
