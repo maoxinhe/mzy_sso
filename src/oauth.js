@@ -498,7 +498,14 @@ export function openidConfiguration(env, origin) {
       'email_verified', 'gender', 'locale', 'profile', 'groups', 'providers', 'updated_at'
     ],
     code_challenge_methods_supported: ['S256', 'plain'],
-    token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post', 'none']
+    token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post', 'none'],
+
+    // 面向 AI 助手 / 自动化工具的机读文档。
+    // OIDC 规范允许发现文档包含未知成员，不理解的客户端应忽略，故不影响标准库兼容。
+    x_llms_txt: `${issuer}/llms.txt`,
+    x_llms_full_txt: `${issuer}/llms-full.txt`,
+    x_openapi: `${issuer}/openapi.json`,
+    x_docs: `${issuer}/docs`
   });
 }
 

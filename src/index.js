@@ -7,7 +7,10 @@
  *           /oauth/introspect  /oauth/revoke  /oauth/register
  *   发现：  /.well-known/openid-configuration  /.well-known/jwks.json
  *   第三方：/api/connect/qq[/callback]  /api/connect/github[/callback]
+ *   第三方：/api/connect/qq[/callback]  /api/connect/github[/callback]
  *   API：   /api/me
+ *   AI 契约：/llms.txt  /llms-full.txt  /openapi.json
+ *   管理API：/api/admin/apps[/id[/reset-secret]]  /users  /tokens  /stats  /logs
  */
 
 import { createStore } from './store.js';
@@ -23,6 +26,8 @@ import {
 } from './ui.js';
 import { handleAdmin } from './admin.js';
 import { docsPage, sdkScript } from './docs.js';
+import { llmsTxt, llmsFullTxt, openApiSpec, textRes, jsonRes } from './openapi.js';
+import { handleAdminApi } from './adminapi.js';
 
 const VERSION = 'v1.1.0';
 
@@ -43,8 +48,8 @@ function redirect(to, status = 302) {
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Admin-Token',
   'Access-Control-Max-Age': '86400'
 };
 
@@ -129,6 +134,24 @@ async function route(request, env, store, url, pathname) {
   }
   if (pathname === '/.well-known/jwks.json') {
     return withCORS(jwksDocument());
+  }
+
+  /* ========== 面向 AI 助手 / 自动化工具的机读契约 ========== */
+
+  if (pathname === '/llms.txt') {
+    return textRes(llmsTxt(env.ISSUER || url.origin, env));
+  }
+  if (pathname === '/llms-full.txt') {
+    return textRes(llmsFullTxt(env.ISSUER || url.origin, env));
+  }
+  if (pathname === '/openapi.json') {
+    return jsonRes(openApiSpec(env.ISSUER || url.origin, env));
+  }
+
+  /* ========== 管理 API（REST，需 ADMIN_API_TOKEN） ========== */
+
+  if (pathname === '/api/admin' || pathname.startsWith('/api/admin/')) {
+    return handleAdminApi(request, env, store, url, pathname);
   }
 
   /* ================= OAuth 标准端点 ================= */

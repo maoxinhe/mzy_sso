@@ -18,8 +18,10 @@
 | 自动发现 | `/.well-known/openid-configuration`、`/.well-known/jwks.json` |
 | 管理后台 | 应用（Client）增删改查、**密钥可重置**、令牌管理、用户角色、系统状态与操作审计 |
 | 前端 SDK | `/sdk.js`，零依赖，自动生成 state 与 PKCE，自动续期 |
+| **AI 可机读** | `/llms.txt`、`/llms-full.txt`、`/openapi.json`，AI 助手读完即可自动对接 |
+| **管理 API** | REST 建应用 / 改配置 / 重置密钥 / 撤销令牌，令牌鉴权，便于脚本与 AI 自动化 |
 | 存储 | Cloudflare KV，全球复制，读延迟极低 |
-| 体积 | 打包后约 180 KB（gzip 约 45 KB），冷启动几乎无感 |
+| 体积 | 打包后约 235 KB（gzip 约 55 KB），冷启动几乎无感 |
 
 ---
 
@@ -70,6 +72,60 @@ curl https://sso.camzy.uno/oauth/userinfo \
 ```
 
 完整流程图、多语言示例（PHP / Python / Node / Go / Java）、错误码表见 **在线文档**：https://sso.camzy.uno/docs
+
+---
+
+## AI 对接与开放 API
+
+想让 AI 助手（Cursor / Claude / CodeBuddy / Copilot 等）帮你把登录接进来？不用把文档粘给它，
+把下面任一地址发过去，它自己就能读完完整契约并写出接入代码：
+
+| 地址 | 用途 | 体积 |
+|---|---|---|
+| https://sso.camzy.uno/llms.txt | **精简契约（首选）** | 约 6 KB |
+| https://sso.camzy.uno/llms-full.txt | 完整契约（多语言示例 + 错误码 + 管理 API） | 约 11 KB |
+| https://sso.camzy.uno/openapi.json | OpenAPI 3.1 规范 | 可导入 Postman / 生成 SDK |
+
+OIDC 发现文档里也附带了这几个地址（`x_llms_txt`、`x_openapi` 等字段，
+OIDC 规范要求客户端忽略未知字段，不影响任何标准库）。
+
+### 管理 API（让 AI / 脚本自动建应用）
+
+管理后台能做的，REST 接口都能做 —— AI 不必点页面就能把应用建好。
+
+**启用**：设置一个管理令牌（不设置则整套管理接口返回 404，默认关闭）
+
+```bash
+npx wrangler secret put ADMIN_API_TOKEN
+```
+
+**鉴权**：所有请求带 `Authorization: Bearer <ADMIN_API_TOKEN>`（也支持 `X-Admin-Token` 头）
+
+```bash
+# 创建应用（返回 client_secret，仅此一次，务必立刻保存）
+curl -X POST https://sso.camzy.uno/api/admin/apps \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"我的站点","redirect_uris":["http://localhost:3000/callback"]}'
+```
+
+| 方法 | 端点 | 说明 |
+|---|---|---|
+| GET | `/api/admin` | 能力探测，返回所有可用端点 |
+| GET | `/api/admin/apps` | 列出应用（密钥只显示掩码） |
+| POST | `/api/admin/apps` | 创建应用，返回完整 `client_secret` |
+| GET | `/api/admin/apps/{id}` | 应用详情 |
+| PATCH | `/api/admin/apps/{id}` | 改名称 / 主页 / 回调 / scope |
+| POST | `/api/admin/apps/{id}/reset-secret` | 重置密钥（旧密钥与旧令牌立即失效） |
+| DELETE | `/api/admin/apps/{id}` | 删除应用（连带清理令牌与授权） |
+| GET | `/api/admin/users` | 用户列表 |
+| GET | `/api/admin/tokens` | 当前有效令牌 |
+| POST | `/api/admin/tokens/revoke` | 撤销令牌 |
+| GET | `/api/admin/stats` | 统计与实例配置 |
+| GET | `/api/admin/logs` | 操作审计日志 |
+
+> `client_secret` 只在**创建**和**重置密钥**时返回一次，请立即保存。
+> 忘记就只能重置一个新的（旧密钥与该应用下已签发令牌会一并失效）。
 
 ---
 
@@ -264,6 +320,7 @@ npm run dev          # http://localhost:8787
 | `SESSION_TTL` | 浏览器会话有效期（秒） | 604800 |
 | `ALLOW_REGISTER` | 是否开放公开注册 | true |
 | `ALLOW_APP_REGISTER` | 是否开放应用自助注册（RFC 7591） | false |
+| `ADMIN_API_TOKEN` | 管理 API 令牌（建议用 Secret 写入）。不设置则管理 API 整体关闭 | — |
 
 ### 目录结构
 
@@ -276,7 +333,9 @@ mzy_sso/
 │   ├── crypto.js      # PBKDF2 密码哈希、JWT、PKCE、随机数
 │   ├── providers.js   # QQ（小白菜）与 GitHub 登录适配器
 │   ├── ui.js          # 登录/注册/同意/个人中心页面
-│   ├── admin.js       # 管理后台
+│   ├── admin.js       # 管理后台（网页）
+│   ├── adminapi.js    # 管理 REST API（令牌鉴权，供 AI / 脚本调用）
+│   ├── openapi.js     # /llms.txt、/llms-full.txt、/openapi.json 机读契约
 │   └── docs.js        # 在线文档页与 /sdk.js
 ├── examples/          # 各语言接入示例
 ├── wrangler.toml      # Worker 配置

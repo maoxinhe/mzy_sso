@@ -33,6 +33,7 @@ export function docsPage({ siteName, issuer }) {
     </div>
 
     <div class="doc-toc">
+      <a href="#ai">AI 对接</a>
       <a href="#flow">接入流程</a>
       <a href="#quick">快速开始</a>
       <a href="#sdk">JS SDK</a>
@@ -40,6 +41,7 @@ export function docsPage({ siteName, issuer }) {
       <a href="#examples">多语言示例</a>
       <a href="#errors">错误码</a>
       <a href="#faq">常见问题</a>
+      <a href="#adminapi">管理 API</a>
     </div>
 
     <p>
@@ -53,6 +55,62 @@ export function docsPage({ siteName, issuer }) {
       <b>基础地址（Issuer）：</b><code>${esc(I)}</code><br>
       标准发现文档：<a href="/.well-known/openid-configuration" target="_blank"><code>${esc(I)}/.well-known/openid-configuration</code></a>
       —— 多数框架填这一个地址即可自动完成全部配置。
+      </div>
+    </div>
+
+    <h2 id="ai">零、让 AI 助手帮你对接（推荐）</h2>
+    <p>
+      如果你用 AI 编程助手（Cursor、Claude、CodeBuddy、Copilot 等）来写接入代码，
+      不用把本文档粘给它 —— 把下面任意一个地址发过去，它就能自己读完完整契约并写出代码。
+    </p>
+
+    <div class="notice">
+      ${ICONS.activity}<div>
+      <b>精简版（约 6 KB，首选）：</b><a href="/llms.txt" target="_blank"><code>${esc(I)}/llms.txt</code></a><br>
+      <b>完整版（含多语言示例与错误码）：</b><a href="/llms-full.txt" target="_blank"><code>${esc(I)}/llms-full.txt</code></a><br>
+      <b>OpenAPI 3.1 规范（可导入 Postman / 生成 SDK）：</b><a href="/openapi.json" target="_blank"><code>${esc(I)}/openapi.json</code></a>
+      </div>
+    </div>
+
+    <p>也可以直接把下面这段提示词复制给 AI：</p>
+
+    <pre><code>我要接入一个 OAuth2/OIDC 单点登录服务，请先阅读这里的完整接入契约：
+${esc(I)}/llms.txt
+
+然后帮我完成接入：
+1. 在 ${esc(I)}/admin 创建一个应用，回调地址填 http://localhost:3000/callback
+2. 用 Node.js(Express) 写一份接入代码，使用授权码 + PKCE 流程
+3. 拿到用户信息后用 sub 字段关联本地账号</code></pre>
+
+    <h2 id="adminapi">管理 API（让 AI / 脚本自动建应用）</h2>
+    <p>
+      管理后台能做的事，都能用 REST 接口做 —— AI 不用点页面就能帮你把应用建好。
+      需先在 Worker 里配置密钥 <code>ADMIN_API_TOKEN</code>（详见 README），
+      然后所有请求带上：<code>Authorization: Bearer &lt;ADMIN_API_TOKEN&gt;</code>
+    </p>
+
+    <pre><code># 创建一个应用（返回 client_secret，仅此一次，务必保存）
+curl -X POST ${esc(I)}/api/admin/apps \\
+  -H "Authorization: Bearer $TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{"name":"我的站点","redirect_uris":["http://localhost:3000/callback"]}'
+
+# 其他接口
+GET    /api/admin/apps                     列出应用（密钥只显示掩码）
+GET    /api/admin/apps/{id}                应用详情
+PATCH  /api/admin/apps/{id}                改名称 / 回调 / scope
+POST   /api/admin/apps/{id}/reset-secret   重置密钥（旧令牌立即失效）
+DELETE /api/admin/apps/{id}                删除应用
+GET    /api/admin/users                    用户列表
+GET    /api/admin/tokens                   有效令牌
+POST   /api/admin/tokens/revoke            撤销令牌
+GET    /api/admin/stats                    统计与实例配置
+GET    /api/admin/logs                     操作审计日志</code></pre>
+
+    <div class="notice">
+      ${ICONS.key}<div>
+      <b>安全提示：</b><code>client_secret</code> 只在「创建」和「重置密钥」时返回一次，请立即保存。
+      忘记就只能重置一个新的（旧密钥与该应用下已签发令牌会一起失效）。
       </div>
     </div>
 
