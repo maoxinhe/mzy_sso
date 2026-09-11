@@ -165,7 +165,7 @@ async function appsTab(env, store, user) {
 
   const rows = apps.map(a => `
     <tr>
-      <td>
+      <td data-label="应用">
         <div style="display:flex;align-items:center;gap:10px">
           <div class="app-icon" style="width:30px;height:30px;font-size:12px;border-radius:8px">
             ${esc((a.name || '?').slice(0, 1).toUpperCase())}</div>
@@ -175,8 +175,8 @@ async function appsTab(env, store, user) {
           </div>
         </div>
       </td>
-      <td><code>${esc(a.client_id)}</code></td>
-      <td>
+      <td data-label="Client ID"><code>${esc(a.client_id)}</code></td>
+      <td data-label="Client Secret">
         <div class="secret-bar">
           <span class="val" id="sec-${esc(a.client_id)}">${esc(mask(a.client_secret))}</span>
           <button class="btn btn-ghost btn-sm" style="padding:0 8px;height:24px"
@@ -186,9 +186,9 @@ async function appsTab(env, store, user) {
                   onclick="copyText('${esc(a.client_secret)}','Client Secret')">${ICONS.copy}</button>
         </div>
       </td>
-      <td>${(a.redirect_uris || []).map(u => `<code>${esc(u)}</code>`).join('<br>')}</td>
-      <td>${(a.scopes || []).map(s => `<span class="badge">${esc(s)}</span> `).join('')}</td>
-      <td>
+      <td data-label="回调地址">${(a.redirect_uris || []).map(u => `<code>${esc(u)}</code>`).join('<br>')}</td>
+      <td data-label="Scopes">${(a.scopes || []).map(s => `<span class="badge">${esc(s)}</span> `).join('')}</td>
+      <td data-label="操作">
         <div class="row-acts">
           <button class="btn btn-secondary btn-sm" onclick="togglePanel('edit-${esc(a.client_id)}')">${ICONS.edit} 编辑</button>
           <form method="POST" action="/admin/apps/reset-secret" style="display:inline"
@@ -301,7 +301,7 @@ async function usersTab(env, store, user) {
 
   const rows = users.map(u => `
     <tr>
-      <td>
+      <td data-label="用户">
         <div style="display:flex;align-items:center;gap:9px">
           <img src="${esc(u.avatar || '')}" width="28" height="28"
                style="border-radius:50%;background:var(--surface-2);object-fit:cover" alt="">
@@ -311,12 +311,12 @@ async function usersTab(env, store, user) {
           </div>
         </div>
       </td>
-      <td><code>${esc(u.uid)}</code></td>
-      <td>${Object.keys(u.providers || {}).map(p =>
+      <td data-label="UID"><code>${esc(u.uid)}</code></td>
+      <td data-label="登录方式">${Object.keys(u.providers || {}).map(p =>
         `<span class="badge ${p === 'qq' ? 'badge-brand' : ''}">${esc(p)}</span> `).join('') || '<span class="t-sub">仅密码</span>'}</td>
-      <td>${u.is_admin ? '<span class="badge badge-ok">管理员</span>' : '<span class="badge">用户</span>'}</td>
-      <td class="t-sub">${new Date(u.created_at || Date.now()).toLocaleDateString('zh-CN')}</td>
-      <td><div class="row-acts">
+      <td data-label="角色">${u.is_admin ? '<span class="badge badge-ok">管理员</span>' : '<span class="badge">用户</span>'}</td>
+      <td data-label="注册时间" class="t-sub">${new Date(u.created_at || Date.now()).toLocaleDateString('zh-CN')}</td>
+      <td data-label="操作"><div class="row-acts">
         ${u.uid === user.uid
           ? '<span class="t-sub">当前登录</span>'
           : `<form method="POST" action="/admin/users/toggle-admin">
@@ -364,15 +364,15 @@ async function tokensTab(env, store, user) {
     const color = left > 1800 ? 'var(--ok)' : left > 300 ? 'var(--warn)' : 'var(--danger)';
 
     return `<tr>
-      <td><code>${esc(mask(t.access_token))}</code></td>
-      <td>
+      <td data-label="令牌"><code>${esc(mask(t.access_token))}</code></td>
+      <td data-label="所属应用">
         <div class="t-main">${esc(app?.name || t.client_id)}</div>
         <div class="t-sub"><code style="font-size:10.5px">${esc(t.client_id)}</code></div>
       </td>
-      <td>${u ? `<div class="t-main">${esc(u.nickname || u.username)}</div>
+      <td data-label="用户">${u ? `<div class="t-main">${esc(u.nickname || u.username)}</div>
                  <div class="t-sub">${esc(u.uid)}</div>`
              : '<span class="badge">客户端凭证</span>'}</td>
-      <td style="min-width:120px">
+      <td data-label="剩余有效期" style="min-width:120px">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="flex:1;height:4px;border-radius:3px;background:var(--surface-2);overflow:hidden">
             <div style="width:${pct.toFixed(0)}%;height:100%;border-radius:3px;background:${color}"></div>
@@ -381,8 +381,8 @@ async function tokensTab(env, store, user) {
         </div>
         <div class="t-sub" style="margin-top:3px">${(t.scope || []).join(' ')}</div>
       </td>
-      <td class="t-sub">${new Date((t.issued_at || 0) * 1000).toLocaleString('zh-CN')}</td>
-      <td><div class="row-acts">
+      <td data-label="签发时间" class="t-sub">${new Date((t.issued_at || 0) * 1000).toLocaleString('zh-CN')}</td>
+      <td data-label="操作"><div class="row-acts">
         <form method="POST" action="/admin/tokens/revoke" onsubmit="return confirmDo('撤销后该令牌立即失效，对应站点需重新登录。确定撤销？')">
           <input type="hidden" name="token" value="${esc(t.access_token)}">
           <button class="btn btn-danger btn-sm" type="submit">${ICONS.trash} 撤销</button>

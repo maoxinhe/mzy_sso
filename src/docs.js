@@ -12,6 +12,12 @@ const EXTRA = `
 .doc-nav-in{max-width:860px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
 .doc-logo{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700;color:var(--text);letter-spacing:-.02em}
 .doc-logo svg{color:var(--brand);width:21px;height:21px}
+@media(max-width:640px){
+  .doc-nav-in{padding:0 14px;height:52px;gap:8px}
+  .doc-logo{font-size:13.5px;min-width:0}
+  .doc-logo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:88px}
+  .doc-nav-in .btn{padding:0 11px;font-size:12.5px;height:34px}
+}
 `;
 
 export function docsPage({ siteName, issuer }) {

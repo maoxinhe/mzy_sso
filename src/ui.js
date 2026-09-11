@@ -69,17 +69,34 @@ html[data-theme="dark"]{
   --sh-brand:0 6px 20px -6px rgba(124,124,232,.45);
 }
 
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI Variable","Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,sans-serif;
   background:var(--bg);color:var(--text);line-height:1.62;min-height:100vh;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   font-feature-settings:"cv02","cv03","cv04","cv11";
+  overflow-x:hidden;overscroll-behavior-y:none;
 }
 a{color:var(--brand);text-decoration:none;transition:.15s}
 a:hover{color:var(--brand-2)}
-button{font-family:inherit}
+button{font-family:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+input,textarea,select{font-family:inherit;-webkit-tap-highlight-color:transparent}
+img,svg{max-width:100%}
 ::selection{background:var(--brand-ring);color:var(--text)}
+
+/* 移动端：安全区（刘海屏 / 底部横条）适配 */
+@supports(padding:max(0px)){
+  .auth-panel{padding-left:max(32px,env(safe-area-inset-left));padding-right:max(32px,env(safe-area-inset-right))}
+  .content{padding-bottom:max(56px,env(safe-area-inset-bottom))}
+  .land-foot{padding-bottom:max(26px,env(safe-area-inset-bottom))}
+  .toast{bottom:max(26px,calc(env(safe-area-inset-bottom) + 14px))}
+}
+
+/* 移动端：输入框字号不低于 16px，否则 iOS Safari 聚焦时会强制放大页面 */
+@media(max-width:700px){
+  .input,.textarea,select,input[type="text"],input[type="email"],
+  input[type="password"],input[type="search"],input[type="url"]{font-size:16px !important}
+}
 
 /* 滚动条 */
 ::-webkit-scrollbar{width:10px;height:10px}
@@ -296,7 +313,15 @@ button{font-family:inherit}
   background:var(--surface);border-right:1px solid var(--border);padding:16px 12px;
   display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow-y:auto;
 }
-@media(max-width:860px){.sidebar{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border)}}
+@media(max-width:860px){
+  .sidebar{
+    position:sticky;top:0;height:auto;flex-direction:row;align-items:center;
+    overflow-x:auto;overflow-y:hidden;border-right:none;border-bottom:1px solid var(--border);
+    padding:8px 10px;gap:4px;z-index:16;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sidebar::-webkit-scrollbar{display:none}
+}
 .side-brand{display:flex;align-items:center;gap:9px;padding:8px 10px 16px;font-weight:700;font-size:14px;letter-spacing:-.02em}
 .side-brand svg{color:var(--brand);width:22px;height:22px;flex:0 0 auto}
 .side-label{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;padding:12px 10px 6px;text-transform:uppercase}
@@ -309,7 +334,14 @@ button{font-family:inherit}
 .side-link svg{flex:0 0 auto;opacity:.85}
 .side-link.on svg{opacity:1}
 .side-foot{margin-top:auto;padding:10px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);line-height:1.6}
-@media(max-width:860px){.side-foot{display:none}.side-label{display:none}.side-brand{padding:4px 8px}}
+@media(max-width:860px){
+  .side-foot{display:none}
+  .side-label{display:none}
+  .side-brand{display:none}
+  .side-link{padding:8px 12px;font-size:13.5px;flex:0 0 auto}
+  .side-link.on{background:var(--brand);color:#fff}
+  .side-link.on svg{opacity:1}
+}
 
 .main{min-width:0;display:flex;flex-direction:column}
 .topbar{
@@ -321,7 +353,13 @@ button{font-family:inherit}
 .topbar .crumb{font-size:12px;color:var(--muted);font-weight:500}
 .top-right{display:flex;align-items:center;gap:9px}
 .content{padding:24px 26px 56px;flex:1;min-width:0}
-@media(max-width:640px){.content{padding:16px 14px 40px}.topbar{padding:0 16px}}
+@media(max-width:640px){
+  .content{padding:16px 14px 40px}
+  .topbar{padding:0 14px;height:52px;gap:10px}
+  .topbar h1{font-size:15px}
+  .topbar .crumb{display:none}
+  .top-right{gap:6px}
+}
 
 .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
 .page-head h2{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
@@ -358,6 +396,58 @@ code,.mono{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);
   padding:2px 6px;border-radius:5px;border:1px solid var(--border);word-break:break-all}
 .empty{padding:44px 20px;text-align:center;color:var(--muted);font-size:13px}
 .empty svg{opacity:.35;margin-bottom:10px}
+
+/* 移动端：表格转卡片列表，避免横向滚动 */
+@media(max-width:700px){
+  .tbl-wrap{overflow-x:visible}
+  .tbl-card{border:none;background:none;box-shadow:none;border-radius:0}
+  table{font-size:14px}
+
+  /* 仅对「带 data-label 的表格」做卡片化；纯 label/value 表（如账号信息）保持原样 */
+  thead{display:none}
+  tbody tr:has(td[data-label]){
+    display:block;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--r-lg);margin-bottom:10px;padding:4px 2px;box-shadow:var(--sh-1);
+  }
+  tbody tr:has(td[data-label]):hover{background:var(--surface)}
+  tbody tr:has(td[data-label]) td{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+    padding:9px 14px;border-bottom:1px solid var(--border);text-align:right;
+  }
+  tbody tr:has(td[data-label]) td:last-child{border-bottom:none}
+  td[data-label]::before{
+    content:attr(data-label);flex:0 0 auto;font-size:11px;font-weight:700;color:var(--muted);
+    letter-spacing:.04em;text-transform:uppercase;text-align:left;padding-top:3px;
+  }
+  td[data-label=""]::before{display:none}
+  td .t-main,td .t-sub{text-align:right}
+  .row-acts{justify-content:flex-end;width:100%}
+  tbody td:has(.row-acts){flex-direction:column;align-items:stretch;gap:8px}
+  tbody td:has(.row-acts)::before{text-align:left}
+  .secret-bar{flex-wrap:wrap;gap:7px}
+  .secret-bar .val{flex:1 1 100%;white-space:normal;word-break:break-all}
+
+  /* 纯 label/value 表：两列紧凑展示，值可换行 */
+  tbody tr:not(:has(td[data-label])):not(:has(td[colspan])){
+    display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border);
+  }
+  tbody tr:not(:has(td[data-label])):not(:has(td[colspan])) td{
+    padding:9px 14px;border-bottom:none;
+  }
+  tbody tr:not(:has(td[data-label])):not(:has(td[colspan])) td:first-child{
+    flex:0 0 40%;color:var(--muted);font-size:12.5px;
+  }
+  tbody tr:not(:has(td[data-label])):not(:has(td[colspan])) td:last-child{
+    flex:1;text-align:right;word-break:break-all;
+  }
+
+  /* 编辑面板行（colspan 折叠行）在卡片模式下不单独成块，面板本身照常展开 */
+  tbody tr:has(> td[colspan]){background:none;border:none;box-shadow:none;margin:0;padding:0}
+  tbody tr:has(> td[colspan]) > td{
+    display:block;padding:0;border:none;background:none;
+  }
+  tbody tr:has(> td[colspan]) > td::before{display:none}
+}
 
 /* 折叠面板（编辑表单） */
 .panel{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);margin-bottom:16px;overflow:hidden;box-shadow:var(--sh-1)}
@@ -436,6 +526,61 @@ code,.mono{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);
 .step{display:flex;gap:11px;margin-bottom:9px;font-size:13.5px;color:var(--text-2)}
 .step i{flex:0 0 auto;width:21px;height:21px;border-radius:50%;background:var(--brand);color:#fff;
   display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11.5px;font-weight:700;margin-top:3px}
+
+/* ---------- 移动端细节 ---------- */
+@media(max-width:640px){
+  /* 文档页：收紧留白，代码块可横滑 */
+  .doc{padding:0 15px 56px}
+  .doc-h{padding:28px 0 18px}
+  .doc-h h1{font-size:23px}
+  .doc h2{font-size:17.5px;margin:30px 0 10px;padding-top:18px}
+  .doc p,.doc li{font-size:14px}
+  .doc pre{padding:12px 13px;font-size:12px;border-radius:var(--r);-webkit-overflow-scrolling:touch}
+  .doc-toc{padding:8px 0;gap:5px}
+  .doc-toc a{padding:5px 10px;font-size:12px}
+
+  /* 文档内表格转卡片 */
+  .doc table,.doc thead,.doc tbody,.doc tr,.doc td,.doc th{display:block}
+  .doc thead{display:none}
+  .doc table{margin-bottom:12px}
+  .doc tbody tr{
+    border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;
+    background:var(--surface);overflow:hidden;
+  }
+  .doc td{border:none;border-bottom:1px solid var(--border);padding:9px 12px;font-size:13px}
+  .doc tbody tr td:last-child{border-bottom:none}
+  .doc td:first-child{background:var(--surface-2);font-weight:650;color:var(--text)}
+
+  /* 落地页 */
+  .land-nav-in{padding:0 16px;height:54px}
+  .land-hero{padding:48px 18px 40px}
+  .land-hero p{font-size:15px;padding:0 4px}
+  .land-sec{padding:0 18px 52px}
+  .land-cta{flex-direction:column;align-items:stretch;padding:0 18px}
+  .land-cta .btn{width:100%}
+  .cta-inner{padding:30px 20px}
+  .cta-inner h2{font-size:20px}
+  .grid-3{grid-template-columns:1fr}
+  .land-foot-in{flex-direction:column;gap:6px}
+
+  /* 认证页 */
+  .auth-panel{padding:28px 20px}
+  .auth-title{font-size:20px}
+  .auth-brand{padding:32px 24px}
+  .auth-hero h2{font-size:26px}
+  .oauth-grid{grid-template-columns:1fr}
+  .btn{height:42px}
+  .btn-sm{height:32px}
+
+  /* 卡片与表单 */
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat-v{font-size:20px}
+  .panel-h{padding:13px 14px}
+  .panel-b{padding:0 14px 15px;padding-top:14px}
+  .page-head{flex-direction:column;align-items:stretch;gap:12px}
+  .page-head .btn,.page-head form{width:100%}
+  .sec-h{flex-direction:column;align-items:stretch;gap:10px}
+}
 `;
 
 /* ============================ 骨架 ============================ */
@@ -458,8 +603,12 @@ function page({ title, body, siteName = 'MZY SSO', extra = '', desc = '' }) {
 <html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>${esc(title)} · ${esc(siteName)}</title>
 ${desc ? `<meta name="description" content="${esc(desc)}">` : ''}
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b5bd6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5.5L12 2 4 5.5V12c0 6 8 10 8 10z'/%3E%3Cpath d='M9.2 12.2l2 2 3.6-3.9'/%3E%3C/svg%3E">
