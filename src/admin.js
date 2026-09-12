@@ -18,7 +18,7 @@
 import { page, esc, ICONS, sideNav, defaultAvatar } from './ui.js';
 import { randomId, randomToken } from './crypto.js';
 
-const VERSION = 'v1.1.1';
+const VERSION = 'v1.2.0';
 
 /* ============================ 入口 ============================ */
 

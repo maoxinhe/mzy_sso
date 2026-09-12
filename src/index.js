@@ -29,7 +29,7 @@ import { docsPage, sdkScript } from './docs.js';
 import { llmsTxt, llmsFullTxt, openApiSpec, textRes, jsonRes } from './openapi.js';
 import { handleAdminApi } from './adminapi.js';
 
-const VERSION = 'v1.1.1';
+const VERSION = 'v1.2.0';
 
 /* =========================================================
  *  工具函数
