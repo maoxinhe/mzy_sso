@@ -154,6 +154,9 @@ img,svg{max-width:100%}
 .input:focus,.textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3.5px var(--brand-ring)}
 .textarea{resize:vertical;min-height:76px;font-family:var(--mono);font-size:12.5px;line-height:1.7}
 .hint{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.auth-note{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:var(--muted);
+  line-height:1.6;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.auth-note svg{flex-shrink:0;margin-top:2px;opacity:.75}
 .check{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text-2);cursor:pointer;margin-bottom:9px}
 .check input{margin-top:3px;accent-color:var(--brand);width:15px;height:15px;cursor:pointer}
 
@@ -195,6 +198,12 @@ img,svg{max-width:100%}
 .auth-panel{display:flex;align-items:center;justify-content:center;padding:40px 32px;background:var(--bg)}
 .auth-box{width:100%;max-width:368px;animation:up .45s cubic-bezier(.16,1,.3,1) both}
 @keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+/* 单栏（手机）时：取消垂直居中，内容从顶部自然开始，避免整块被推到屏幕中段 */
+@media(max-width:900px){
+  .auth{min-height:0}
+  .auth-panel{display:block;padding:34px 22px 46px;min-height:100vh}
+  .auth-box{max-width:420px;margin:0 auto}
+}
 .auth-mobile-logo{display:none;align-items:center;gap:9px;font-size:15px;font-weight:700;margin-bottom:26px}
 @media(max-width:900px){.auth-mobile-logo{display:flex}}
 .auth-mobile-logo svg{width:24px;height:24px;color:var(--brand)}
@@ -321,6 +330,20 @@ img,svg{max-width:100%}
     -webkit-overflow-scrolling:touch;
   }
   .sidebar::-webkit-scrollbar{display:none}
+  /* 手机端导航换行后高度不定，两个 sticky 元素会互相遮挡：
+     让导航独占吸顶，顶栏改为普通流式布局，滚动时自然收起 */
+  .topbar{position:static}
+}
+/* 窄屏（手机）：标签栏换行铺满，保证「令牌管理 / 系统状态」等入口不被截断 */
+@media(max-width:640px){
+  .sidebar{
+    flex-wrap:wrap;overflow:visible;padding:8px 10px;gap:5px;
+  }
+  .side-link{
+    flex:1 1 calc(50% - 5px);justify-content:center;min-width:0;
+    padding:9px 6px;font-size:12.5px;gap:6px;
+  }
+  .side-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 .side-brand{display:flex;align-items:center;gap:9px;padding:8px 10px 16px;font-weight:700;font-size:14px;letter-spacing:-.02em}
 .side-brand svg{color:var(--brand);width:22px;height:22px;flex:0 0 auto}
@@ -355,7 +378,8 @@ img,svg{max-width:100%}
 .content{padding:24px 26px 56px;flex:1;min-width:0}
 @media(max-width:640px){
   .content{padding:16px 14px 40px}
-  .topbar{padding:0 14px;height:52px;gap:10px}
+  .topbar{display:grid;grid-template-columns:1fr auto;
+    padding:11px 14px;height:auto;min-height:0;gap:10px;align-items:center}
   .topbar h1{font-size:15px}
   .topbar .crumb{display:none}
   .top-right{gap:6px}
@@ -420,9 +444,28 @@ code,.mono{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);
     letter-spacing:.04em;text-transform:uppercase;text-align:left;padding-top:3px;
   }
   td[data-label=""]::before{display:none}
+
+  /* 徽标 / 操作按钮等短内容：成对时并排，避免被拆成上下两行 */
+  tbody tr:has(td[data-label]) td:has(.badge),
+  tbody tr:has(td[data-label]) td:has(.row-acts){
+    align-items:center;flex-direction:row;flex-wrap:wrap;justify-content:space-between;gap:8px;
+  }
+  tbody tr:has(td[data-label]) td:has(.badge) .badge{flex:0 0 auto}
+
+  /* 含长内容的单元格：标签在上、内容在下，右对齐，长字符串自动换行 */
+  tbody tr:has(td[data-label]) td:has(code),
+  tbody tr:has(td[data-label]) td:has(.secret-bar){
+    flex-direction:column;align-items:stretch;gap:6px;text-align:left;
+  }
+  tbody tr:has(td[data-label]) td:has(code)::before,
+  tbody tr:has(td[data-label]) td:has(.secret-bar)::before{text-align:left;padding-top:0}
+  tbody tr:has(td[data-label]) td:has(code) code,
+  tbody tr:has(td[data-label]) td:has(code) .mono{
+    display:block;width:100%;white-space:normal;word-break:break-all;text-align:left;
+  }
+
   td .t-main,td .t-sub{text-align:right}
-  .row-acts{justify-content:flex-end;width:100%}
-  tbody td:has(.row-acts){flex-direction:column;align-items:stretch;gap:8px}
+  .row-acts{justify-content:flex-end;width:auto}
   tbody td:has(.row-acts)::before{text-align:left}
   .secret-bar{flex-wrap:wrap;gap:7px}
   .secret-bar .val{flex:1 1 100%;white-space:normal;word-break:break-all}
@@ -447,6 +490,18 @@ code,.mono{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);
     display:block;padding:0;border:none;background:none;
   }
   tbody tr:has(> td[colspan]) > td::before{display:none}
+
+  /* 三列配置行（标签 / 说明 / 状态徽标）：说明在上，状态徽标靠右，避免徽标被挤压成竖排 */
+  tbody tr:has(.cfg-badge){
+    display:block;border-bottom:1px solid var(--border);
+  }
+  tbody tr:has(.cfg-badge) td{display:block;padding:0 14px;border-bottom:none;text-align:left}
+  tbody tr:has(.cfg-badge) td:first-child{padding-top:12px;font-size:12.5px}
+  tbody tr:has(.cfg-badge) td.cfg-desc{padding-top:2px;padding-bottom:10px}
+  tbody tr:has(.cfg-badge) td.cfg-badge{
+    width:auto !important;text-align:left !important;padding:0 14px 12px;
+  }
+  tbody tr:has(.cfg-badge) td.cfg-badge .badge{white-space:nowrap}
 }
 
 /* 折叠面板（编辑表单） */
@@ -456,9 +511,16 @@ code,.mono{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);
   cursor:pointer;user-select:none;transition:.14s;
 }
 .panel-h:hover{background:var(--surface-2)}
-.panel-h h3{font-size:14px;font-weight:680;display:flex;align-items:center;gap:8px}
-.panel-h .chev{transition:.22s;color:var(--muted)}
+.panel-h:active{background:var(--brand-soft)}
+.panel-h h3{font-size:14px;font-weight:680;display:flex;align-items:center;gap:8px;min-width:0}
+.panel-h .chev{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;background:var(--surface-2);
+  border:1px solid var(--border);transition:.22s;color:var(--muted);
+}
+.panel-h:hover .chev{color:var(--brand);border-color:color-mix(in srgb,var(--brand) 30%,transparent)}
 .panel.open .panel-h .chev{transform:rotate(180deg)}
+.panel.open .panel-h{border-bottom:none}
 .panel-b{padding:0 18px 18px;border-top:1px solid var(--border);padding-top:16px}
 .panel:not(.open) .panel-b{display:none}
 
@@ -564,10 +626,11 @@ code,.mono{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);
   .land-foot-in{flex-direction:column;gap:6px}
 
   /* 认证页 */
-  .auth-panel{padding:28px 20px}
+  .auth-panel{padding:30px 20px 44px}
   .auth-title{font-size:20px}
   .auth-brand{padding:32px 24px}
   .auth-hero h2{font-size:26px}
+  .auth-mobile-logo{margin-bottom:20px}
   .oauth-grid{grid-template-columns:1fr}
   .btn{height:42px}
   .btn-sm{height:32px}
@@ -1043,7 +1106,6 @@ export function profilePage({ siteName, user, message, apps = [] }) {
 function defaultAvatar(uid) {
   return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(uid || 'mzy')}&backgroundColor=f0effe`;
 }
-
 /** 侧边导航（个人中心与后台共用） */
 function sideNav(active, user, siteName, isAdmin = false) {
   const link = (key, href, label, icon, show = true) => show ? `
@@ -1070,6 +1132,48 @@ function sideNav(active, user, siteName, isAdmin = false) {
   </aside>`;
 }
 
+/* ============================ 初始化页 ============================ */
+
+export function setupPage({ siteName, error, version }) {
+  const body = `<div class="auth">
+    ${authBrand(siteName, version)}
+    <div class="auth-panel">
+      <div class="auth-box">
+        <div class="auth-mobile-logo">${ICONS.shield}<span>${esc(siteName)}</span></div>
+        <div class="badge badge-brand" style="margin-bottom:14px">${ICONS.server} 首次部署 · 步骤 1 / 1</div>
+        <h1 class="auth-title">创建管理员账号</h1>
+        <p class="auth-sub">这是本实例的第一个账号，将自动获得管理员权限，之后可在控制台创建接入应用。</p>
+        ${error ? `<div class="alert alert-err">${ICONS.shield}${esc(error)}</div>` : ''}
+        <form method="POST" action="/setup" autocomplete="on">
+          <div class="form-grid">
+            <div class="field">
+              <label for="username">用户名</label>
+              <input class="input" id="username" name="username" type="text" placeholder="admin" required autofocus autocomplete="username">
+              <div class="hint">3-20 位字母、数字或下划线</div>
+            </div>
+            <div class="field">
+              <label for="email">邮箱</label>
+              <input class="input" id="email" name="email" type="email" placeholder="admin@example.com" required autocomplete="email">
+            </div>
+          </div>
+          <div class="field">
+            <label for="password">密码</label>
+            <input class="input" id="password" name="password" type="password" placeholder="至少 6 位" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label for="password2">确认密码</label>
+            <input class="input" id="password2" name="password2" type="password" placeholder="再输入一次" required minlength="6" autocomplete="new-password">
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" style="height:40px;margin-top:4px">创建并进入控制台</button>
+        </form>
+        <div class="auth-note">${ICONS.lock} 密码以 PBKDF2-SHA256 加盐哈希存储，明文不会离开你的实例</div>
+      </div>
+    </div>
+  </div>`;
+
+  return page({ title: '初始化', siteName, body });
+}
+
 /* ============================ 错误页 ============================ */
 
 export function errorPage({ siteName, title, message, status = 400 }) {
@@ -1085,4 +1189,4 @@ export function errorPage({ siteName, title, message, status = 400 }) {
   });
 }
 
-export { ICONS, page, sideNav, CSS, SCOPE_TEXT };
+export { ICONS, page, sideNav, CSS, SCOPE_TEXT, defaultAvatar };

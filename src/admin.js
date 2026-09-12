@@ -15,10 +15,10 @@
  *   GET  /admin/system               系统状态（自建信息）
  */
 
-import { page, esc, ICONS, sideNav } from './ui.js';
+import { page, esc, ICONS, sideNav, defaultAvatar } from './ui.js';
 import { randomId, randomToken } from './crypto.js';
 
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.1.1';
 
 /* ============================ 入口 ============================ */
 
@@ -257,7 +257,7 @@ async function appsTab(env, store, user) {
 
   const create = `
     <div class="sec">
-      <div class="panel">
+      <div class="panel open">
         <div class="panel-h" onclick="togglePanel('p-new')">
           <h3>${ICONS.plus} 创建接入应用</h3><span class="chev">${ICONS.arrow}</span>
         </div>
@@ -303,8 +303,10 @@ async function usersTab(env, store, user) {
     <tr>
       <td data-label="用户">
         <div style="display:flex;align-items:center;gap:9px">
-          <img src="${esc(u.avatar || '')}" width="28" height="28"
-               style="border-radius:50%;background:var(--surface-2);object-fit:cover" alt="">
+          <img src="${esc(u.avatar || defaultAvatar(u.uid))}" width="28" height="28"
+               loading="lazy" referrerpolicy="no-referrer"
+               style="border-radius:50%;background:var(--surface-2);object-fit:cover;flex:0 0 auto" alt=""
+               onerror="this.style.visibility='hidden'">
           <div style="min-width:0">
             <div class="t-main">${esc(u.nickname || u.username || '-')}</div>
             <div class="t-sub">${esc(u.email || '无邮箱')}</div>
@@ -431,8 +433,8 @@ async function systemTab(env, store, user) {
   const configRow = (label, value, ok) => `
     <tr>
       <td style="color:var(--muted);font-size:12.5px;width:190px">${esc(label)}</td>
-      <td>${value}</td>
-      <td style="width:80px;text-align:right">${
+      <td class="cfg-desc">${value}</td>
+      <td class="cfg-badge" style="width:80px;text-align:right">${
         ok === true ? '<span class="badge badge-ok">已启用</span>'
         : ok === false ? '<span class="badge badge-warn">未配置</span>'
         : ok === null ? '<span class="badge">已启用</span>' : ''}</td>

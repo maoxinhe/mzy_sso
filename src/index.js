@@ -29,7 +29,7 @@ import { docsPage, sdkScript } from './docs.js';
 import { llmsTxt, llmsFullTxt, openApiSpec, textRes, jsonRes } from './openapi.js';
 import { handleAdminApi } from './adminapi.js';
 
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.1.1';
 
 /* =========================================================
  *  工具函数
@@ -684,24 +684,12 @@ async function handleSetup(request, env, store, url) {
   }
 
   if (request.method === 'GET') {
-    const body = `<div class="wrap"><div class="card">
-      <div class="brand">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-        <b>${esc(env.SITE_NAME)} 初始化</b>
-      </div>
-      <h1>创建管理员账号</h1>
-      <p class="sub">这是系统的第一个账号，将自动获得管理员权限</p>
-      ${url.searchParams.get('error') ? `<div class="alert err" style="display:block">${esc(url.searchParams.get('error'))}</div>` : ''}
-      <form method="POST" action="/setup">
-        <div class="field"><label>用户名</label><input name="username" required autofocus placeholder="admin"></div>
-        <div class="field"><label>邮箱</label><input name="email" type="email" required placeholder="admin@example.com"></div>
-        <div class="field"><label>密码</label><input name="password" type="password" required minlength="6" placeholder="至少 6 位"></div>
-        <div class="field"><label>确认密码</label><input name="password2" type="password" required minlength="6"></div>
-        <button class="btn" type="submit">创建并登录</button>
-      </form>
-    </div></div>`;
-    const { page } = await import('./ui.js');
-    return html(page({ title: '初始化', siteName: env.SITE_NAME, body }));
+    const { setupPage } = await import('./ui.js');
+    return html(setupPage({
+      siteName: env.SITE_NAME,
+      error: url.searchParams.get('error'),
+      version: VERSION
+    }));
   }
 
   // POST
