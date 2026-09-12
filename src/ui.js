@@ -637,7 +637,12 @@ function toggleTheme(){
   try{localStorage.setItem('mzy-theme',next)}catch(e){}
 }
 function togglePanel(id){
-  var p=document.getElementById(id);if(p)p.classList.toggle('open');
+  var el=document.getElementById(id);if(!el)return;
+  // 目标可能是 .panel 本身（如编辑面板），也可能是内层的 .panel-b。
+  // .open 必须加在 .panel 上，因为展开规则是 .panel:not(.open) .panel-b{display:none}。
+  var p = el.classList.contains('panel') ? el : el.closest('.panel');
+  if(!p) p = el;
+  p.classList.toggle('open');
 }
 function revealSecret(id,btn){
   var el=document.getElementById(id);if(!el)return;
